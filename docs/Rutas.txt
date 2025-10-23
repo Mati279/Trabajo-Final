@@ -1,0 +1,26 @@
+D:\Programas Python\Trabajo Final\Trabajo-Final
+│
+├── data/
+│   └── estanzuela/
+│       └── (carpetas de campañas de vuelo y datasets derivados)
+│	│
+│	Material/
+│  	 └── Ortomosaicos/
+│       	├── 10ene/
+│      		├── 17ene/
+│      		└── 24ene/
+│
+├── docs/                      ← Documentación, informes técnicos, PDFs
+│
+├── notebooks/                 ← Notebooks interactivas (Google Colab, análisis, PoC)
+│
+├── results/                   ← Salidas de procesamiento: índices, mapas, gráficos, CSVs
+│
+├── src/                       ← Código fuente del proyecto
+│   ├── __pycache__/
+│   ├── E1 - Preprocesamiento de imagenes.ipynb
+│   └── paths.py               ← Módulo central de rutas
+│
+├── .gitattributes
+├── .gitignore
+└── README.md (opcional, para descripción general del proyecto)

@@ -1,0 +1,177 @@
+Inventario completo del dataset - Proyecto TF
+
+================================================
+Carpetas de imágenes originales (vuelos con dron)
+================================================
+
+Carpeta: estanzuela 10ene2025/DJI_202501091223_016_Crear-ruta-de-zona1
+---------------------------------------------------------------------
+Archivos incluidos:
+- .MRK, .nav, .obs, .bin → Registros GNSS/RTK para PPK.
+- .JPG → Fotografías RGB aéreas.
+
+Ejemplo de imágenes:
+- Área urbana/semiurbana, con vehículos y caminos.
+- Zonas de vegetación dispersa y personas en campo.
+
+Potencial de uso:
+- Dataset de prueba para calibración de pipeline PPK y mosaicos.
+- Ensayo en escenas mixtas (vegetación + infraestructura).
+
+Carpeta: estanzuela 10ene2025/DJI_202501101107_017_LaEstanzuelaSoja
+------------------------------------------------------------------
+Archivos incluidos:
+- .MRK, .nav, .obs, .bin → Telemetría GNSS/RTK.
+- .JPG → Fotografías RGB.
+- .TIF (MS_R, MS_G, MS_NIR, MS_RE) → Multiespectral.
+
+Ejemplo de imágenes:
+- Parcelas de cultivo en hileras.
+- Diferencias de densidad en cobertura vegetal.
+
+Potencial de uso:
+- Cálculo de NDVI, GNDVI, EVI.
+- Segmentación de parcelas y análisis de vigor.
+
+Carpeta: estanzuela 17ene2025/DJI_202501141140_018_shelterLasBrujas
+-------------------------------------------------------------------
+Archivos incluidos:
+- .MRK, .nav, .obs, .bin → GNSS/RTK.
+- .JPG → Fotografías RGB.
+- .TIF → Multiespectral.
+
+Ejemplo de imágenes:
+- Parcelas experimentales pequeñas con bloques separados.
+- Infraestructura de riego y tratamientos diferenciados.
+
+Potencial de uso:
+- Análisis controlado de parcelas experimentales.
+- Segmentación y validación de índices espectrales.
+
+Carpeta: estanzuela 17ene2025/DJI_202501171120_019_LaEstanzuelaSoja
+-------------------------------------------------------------------
+Archivos incluidos:
+- .MRK, .nav, .obs, .bin → GNSS/RTK.
+- .JPG → Fotografías RGB.
+- .TIF → Multiespectral.
+
+Ejemplo de imágenes:
+- Hileras de soja con diferencias de vigor.
+- Áreas de suelo desnudo.
+
+Potencial de uso:
+- Cálculo de índices NDVI, GNDVI, EVI.
+- Detección de vigor y sanidad.
+
+Carpeta: estanzuela 17ene2025/DJI_202501171120_020
+-------------------------------------------------
+Archivos incluidos:
+- .MRK, .nav, .obs, .bin → GNSS/RTK.
+- .JPG → Fotografías RGB.
+- .TIF → Multiespectral.
+
+Ejemplo de imágenes:
+- Parcelas en hileras largas y regulares.
+- Variación de vigor entre franjas.
+
+Potencial de uso:
+- Análisis de uniformidad del crecimiento.
+- Segmentación vigor alto/medio/bajo.
+
+Carpeta: estanzuela 17ene2025/DJI_202501171120_021_estanzuelaB
+-------------------------------------------------------------
+Archivos incluidos:
+- .MRK, .nav, .obs, .bin → GNSS/RTK.
+- .JPG → Fotografías RGB.
+- .TIF → Multiespectral.
+
+Ejemplo de imágenes:
+- Parcelas con hileras alternando vigor alto/bajo.
+- Suelo desnudo y estrés hídrico.
+
+Potencial de uso:
+- Análisis de estrés hídrico y segmentación cultivo/suelo.
+
+Carpeta: estanzuela 17ene2025/DJI_202501171120_022_LaEstanzuelaSoja
+-------------------------------------------------------------------
+Archivos incluidos:
+- .MRK, .nav, .obs, .bin → GNSS/RTK.
+- .JPG → Fotografías RGB.
+- .TIF → Multiespectral.
+
+Ejemplo de imágenes:
+- Parcelas de soja con diferencias notorias de vigor.
+- Suelo desnudo y cañerías de riego.
+
+Potencial de uso:
+- Análisis de estrés hídrico y germinación deficiente.
+
+Carpeta: estanzuela 24ene2025/DJI_202501241205_025_LaEstanzuelaSoja
+-------------------------------------------------------------------
+Archivos incluidos:
+- .MRK, .nav, .obs, .bin → GNSS/RTK.
+- .JPG → Fotografías RGB.
+- .TIF → Multiespectral.
+
+Ejemplo de imágenes:
+- Parcelas con diferencias de crecimiento.
+- Infraestructura de riego visible.
+
+Potencial de uso:
+- Análisis de heterogeneidad intra-lote.
+
+Carpeta: estanzuela 24ene2025/DJI_202501241205_026_estanzuelaB
+-------------------------------------------------------------
+Archivos incluidos:
+- .MRK, .nav, .obs, .bin → GNSS/RTK.
+- .JPG → Fotografías RGB.
+- .TIF → Multiespectral.
+
+Ejemplo de imágenes:
+- Parcelas en hileras con diferencias de vigor.
+- Suelo desnudo y variabilidad espacial.
+
+Potencial de uso:
+- Segmentación vigor alto/bajo y correlación con estrés.
+
+==================================
+Carpetas de ortomosaicos consolidados
+==================================
+
+Carpeta: Material/Ortomosaicos/10ene
+------------------------------------
+Archivos incluidos:
+- estanzuela_10ene_rgb_orthophoto.tif → RGB.
+- estanzuela_10ene_MS_orthophoto.tif → Multiespectral.
+- estanzuela_10ene_RED_orthophoto.tif → Banda Roja.
+- estanzuela_10ene_NIR_orthophoto.tif → Banda NIR.
+
+Potencial de uso:
+- Análisis espectral y mapas de vigor.
+- Punto de partida para serie temporal.
+
+Carpeta: Material/Ortomosaicos/17ene
+------------------------------------
+Archivos incluidos:
+- estanzuela_17ene_rgb_orthophoto.tif → RGB.
+- estanzuela_17ene_MS_orthophoto.tif → Multiespectral.
+- estanzuela_17ene_RED_orthophoto.tif → Banda Roja.
+- estanzuela_17ene_NIR_orthophoto.tif → Banda NIR.
+- Octavio-Vergara-1-17-2025-dsm.tif → Modelo digital de superficie.
+- Octavio-Vergara-1-17-2025-georeferenced_model.laz → Nube de puntos 3D.
+
+Potencial de uso:
+- Comparación temporal y análisis 3D de altura del cultivo.
+
+Carpeta: Material/Ortomosaicos/24ene
+------------------------------------
+Archivos incluidos:
+- estanzuela_24ene_rgb_orthophoto.tif → RGB.
+- estanzuela_24ene_MS_orthophoto.tif → Multiespectral.
+- estanzuela_24ene_RED_orthophoto.tif → Banda Roja.
+- estanzuela_24ene_NIR_orthophoto.tif → Banda NIR.
+- Octavio-Vergara-1-24-2025-dsm.tif → Modelo digital de superficie.
+
+Potencial de uso:
+- Serie temporal completa con 10ene y 17ene.
+- Evolución del cultivo y validación de índices espectrales.
