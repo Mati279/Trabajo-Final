@@ -1,0 +1,70 @@
+🟦 RGB.tif
+
+4 bandas, tipo uint8, con valores máximos = 255.
+
+Bandas 1–3: R, G, B (valores medios ~124, 122, 102 → coherente con imagen en color visible).
+
+Banda 4: alfa (transparencia o máscara de validez) — siempre 255, lo que indica fondo opaco.
+✅ Conclusión: RGB clásico con canal alfa.
+
+🟥 RED.tif
+
+2 bandas, tipo uint16, con una claramente radiométrica (mean ≈ 11 489, max ≈ 65 535).
+
+Banda 1: reflectancia real de la banda roja (Red).
+
+Banda 2: valores tipo 0–255 → canal auxiliar de previsualización o QA (no útil científicamente).
+✅ Conclusión: primera banda = Red, segunda = preview/calibración.
+
+🌿 NIR.tif
+
+2 bandas, también uint16.
+
+Banda 1: reflectancia NIR (mean ≈ 17 000, max ≈ 52 000).
+
+Banda 2: rango 0–255 → canal de previsualización o QA.
+✅ Conclusión: primera banda = NIR real, segunda = preview/calibración.
+
+🟩 MS.tif
+
+5 bandas, float32.
+
+Rangos bajos (0–0.2) → reflectancias normalizadas (0–1).
+
+Patrón típico de multiespectral DJI o MicaSense:
+1️⃣ Blue
+2️⃣ Green
+3️⃣ Red
+4️⃣ RedEdge
+5️⃣ NIR
+✅ Conclusión: este archivo integra las bandas calibradas en reflectancia y ya está listo para índices espectrales (NDVI, GNDVI, EVI, SAVI, PCA).
+
+🔍 Resumen
+Archivo	Bandas útiles	Tipo	Descripción de canales
+RGB	1–3	uint8	Rojo, Verde, Azul (visualización)
+RED	1	uint16	Banda roja radiométrica
+NIR	1	uint16	Banda infrarroja cercana
+MS	1–5	float32	Blue, Green, Red, RedEdge, NIR
+
+
+
+
+🔹 RGB — comparación entre campañas
+{'10ene': {'channels': 4, 'dtype': dtype('uint8'), 'shape': (1850, 2875)},
+ '17ene': {'channels': 4, 'dtype': dtype('uint8'), 'shape': (1947, 2799)},
+ '24ene': {'channels': 4, 'dtype': dtype('uint8'), 'shape': (1990, 3009)}}
+
+🔹 RED — comparación entre campañas
+{'10ene': {'channels': 2, 'dtype': dtype('uint16'), 'shape': (1553, 2719)},
+ '17ene': {'channels': 2, 'dtype': dtype('uint16'), 'shape': (1517, 2724)},
+ '24ene': {'channels': 2, 'dtype': dtype('uint16'), 'shape': (1517, 2788)}}
+
+🔹 NIR — comparación entre campañas
+{'10ene': {'channels': 2, 'dtype': dtype('uint16'), 'shape': (1633, 2871)},
+ '17ene': {'channels': 2, 'dtype': dtype('uint16'), 'shape': (1475, 2723)},
+ '24ene': {'channels': 2, 'dtype': dtype('uint16'), 'shape': (1552, 2784)}}
+
+🔹 MS — comparación entre campañas
+{'10ene': {'channels': 5, 'dtype': dtype('float32'), 'shape': (607, 1110)},
+ '17ene': {'channels': 5, 'dtype': dtype('float32'), 'shape': (621, 1090)},
+ '24ene': {'channels': 5, 'dtype': dtype('float32'), 'shape': (604, 1136)}}
