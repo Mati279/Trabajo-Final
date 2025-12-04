@@ -2,14 +2,10 @@
 Módulo de carga y visualización de ortomosaicos
 ===============================================
 
-Permite cargar automáticamente todos los ortomosaicos
-de una fecha dada ('10ene', '17ene', '24ene') y visualizarlos.
+Colección de utilidades para leer y visualizar arrays de imágenes georreferenciadas.
 
-Uso:
-    from Ortomosaicos import load_orthomosaics, show_orthomosaic
-
-    ortho = load_orthomosaics("17ene")
-    show_orthomosaic(ortho["rgb"], title="RGB - 17ene")
+El flujo de trabajo actual se basa en la selección manual de rutas y el uso 
+de la función `read_tif_array` para cargar los datos en memoria.
 """
 
 import os
@@ -17,106 +13,100 @@ import rasterio
 import numpy as np
 import matplotlib.pyplot as plt
 
-
-def load_orthomosaics(date: str, load_arrays: bool = True) -> dict:
+# Método de carga de geotiffs.
+def read_tif_array(file_path: str) -> tuple[np.ndarray | None, dict | None]:
     """
-    Carga todos los ortomosaicos disponibles para una fecha.
-
+    Lee un archivo TIF de cualquier ruta y retorna su contenido como un array NumPy
+    y su perfil geográfico. Debe ser un archivo GeoTIFF válido.
+    
     Parámetros:
     -----------
-    date : str
-        Fecha/campaña (ej.: '10ene', '17ene', '24ene').
-    load_arrays : bool
-        Si True, abre cada ortomosaico como array (con rasterio).
+    file_path : str
+        Ruta completa al archivo .tif.
 
     Retorna:
     --------
-    dict
-        Diccionario con claves ['rgb', 'ms', 'red', 'nir', 'dsm', 'cloud']
-        y valores con arrays o rutas según load_arrays.
+    (np.ndarray | None, dict | None)
+        1. Array con los datos de la imagen como float32.
+        2. Perfil geográfico.
+        Retorna (None, None) si el archivo no existe, no es GeoTIFF, o hay un error.
     """
-    base_dir = rf"D:\Programas Python\Trabajo Final\Trabajo-Final\data\Material\Ortomosaicos\{date}"
+    # Verificación de existencia del archivo
+    if not os.path.exists(file_path):
+        print(f"Error: archivo no encontrado en la ruta: {file_path}")
+        return None, None
 
-    if not os.path.exists(base_dir):
-        raise FileNotFoundError(f"No se encontró la carpeta: {base_dir}")
-
-    file_map = {
-        "rgb": f"estanzuela_{date}_rgb_orthophoto.tif",
-        "ms":  f"estanzuela_{date}_MS_orthophoto.tif",
-        "red": f"estanzuela_{date}_RED_orthophoto.tif",
-        "nir": f"estanzuela_{date}_NIR_orthophoto.tif",
-        "dsm": f"Octavio-Vergara-1-{date}-dsm.tif",
-        "cloud": f"Octavio-Vergara-1-{date}-georeferenced_model.laz"
-    }
-
-    orthos = {}
-
-    for key, filename in file_map.items():
-        path = os.path.join(base_dir, filename)
-        if os.path.exists(path):
-            if load_arrays and path.endswith(".tif"):
-                with rasterio.open(path) as src:
-                    orthos[key] = src.read()
-            else:
-                orthos[key] = path
-        else:
-            orthos[key] = None
-
-    return orthos
+    try:
+        # Abre el archivo TIF con rasterio
+        with rasterio.open(file_path) as src:
+            # Lee los datos, casteando a float32 para la Normalización Radiométrica
+            data = src.read(out_dtype=np.float32)
+            
+            # Copia el perfil geográfico
+            profile = src.profile.copy()
+            
+            # Chequeo de GeoTIFF válido
+            if profile.get('crs') is None:
+                print(f"Error: el archivo '{os.path.basename(file_path)}' no es un geotiff válido.")
+                return None, None
+                
+            return data, profile
+            
+    except Exception as e:
+        # anejo de errores
+        print(f"Error al leer el archivo {file_path}: {e}")
+        return None, None
 
 
-def show_orthomosaic(orthomosaic, title: str = None):
+# Método de visualización de ortomosaicos.
+def show_orthomosaic(orthomosaic: np.ndarray, title: str = None) -> None:
     """
-    Visualiza un ortomosaico (array o ruta .tif).
+    Visualiza un ortomosaico (array de NumPy).
+    
+    Esta función asume que los datos ya están cargados en memoria como np.ndarray.
+    Maneja arrays con 1, 3 o más bandas (MS) para la visualización.
 
     Parámetros:
     -----------
-    orthomosaic : np.ndarray | str
-        Array de Rasterio o ruta a un archivo .tif.
+    orthomosaic : np.ndarray
+        Array de NumPy ya cargado en memoria.
     title : str, opcional
         Título del gráfico.
     """
-    # Cargar datos
-    if isinstance(orthomosaic, str) and os.path.exists(orthomosaic):
-        with rasterio.open(orthomosaic) as src:
-            data = src.read()
-    elif isinstance(orthomosaic, np.ndarray):
-        data = orthomosaic
-    else:
-        raise ValueError("El argumento debe ser un array o una ruta válida a un .tif")
-
+    # Chequeo de tipo
+    if not isinstance(orthomosaic, np.ndarray) or orthomosaic.size == 0:
+        print("Error: se esperaba un array NumPy no vacío para visualizar.")
+        return
+        
+    data = orthomosaic
+    
     plt.figure(figsize=(8, 8))
 
-    # --- Mostrar RGB o monocanal ---
+    # Caso A: Imagen con color (3 bandas o más)
     if data.shape[0] >= 3:
-        if data.shape[0] == 4:
-            data = data[:3]
-        rgb_img = np.transpose(data, (1, 2, 0)).astype(np.float32) / np.max(data)
+        # Si es el MS tomamos solo las primeras 3 (R, G, B/NIR) para que Matplotlib sepa qué dibujar.
+        display_data = data[:3]
+        
+        # Transponemos: De (3, Alto, Ancho) -> (Alto, Ancho, 3) para matplotlib
+        rgb_img = np.transpose(display_data, (1, 2, 0)).astype(np.float32)
+        
+        # Normalizamos rápido para visualización
+        max_val = np.nanmax(rgb_img)
+        if max_val > 0:
+            rgb_img /= max_val
+            
         plt.imshow(rgb_img)
+
+    # Caso B: Imagen blanco y negro (1 banda, DSM)
     elif data.shape[0] == 1:
+        # Mostramos la única banda con escala de grises
         plt.imshow(data[0], cmap="gray")
+        
     else:
+        # Si tiene 2 bandas, mostramos la primera
         plt.imshow(data[0], cmap="viridis")
 
     plt.axis("off")
     if title:
         plt.title(title)
     plt.show()
-
-def list_orthomosaics(date: str) -> None:
-    """
-    Lista los ortomosaicos disponibles en la fecha indicada.
-
-    Ejemplo:
-        >>> list_orthomosaics("17ene")
-    """
-    base_dir = rf"D:\Programas Python\Trabajo Final\Trabajo-Final\data\Material\Ortomosaicos\{date}"
-
-    if not os.path.exists(base_dir):
-        print(f"No existe la carpeta para {date}")
-        return
-
-    print(f"\n📂 Ortomosaicos disponibles para {date}:\n")
-    for f in sorted(os.listdir(base_dir)):
-        if f.lower().endswith((".tif", ".laz")):
-            print("  -", f)
