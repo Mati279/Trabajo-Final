@@ -107,10 +107,10 @@ def normalize_all(aligned_data: dict) -> dict:
     """
     normalized = {}
     
-    # Normalizamos el MS
+    # Normaliza el MS
     normalized["ms"] = normalize_radiometric(aligned_data["ms_data"])
     
-    # Normalizamos el RGB (si existe)
+    # Normaliza el RGB
     if aligned_data.get("rgb_aligned") is not None:
         normalized["rgb"] = normalize_radiometric(aligned_data["rgb_aligned"])
     else:
@@ -118,10 +118,8 @@ def normalize_all(aligned_data: dict) -> dict:
 
     return normalized
 
-# =============================================================================
-# FLUJO PRINCIPAL DE SESIÓN ÚNICA
-# =============================================================================
 
+# Función maestra de procesamiento
 def process_session(ms_data: np.ndarray, ms_profile: dict, 
                     rgb_data: np.ndarray, rgb_profile: dict) -> dict:
     """
@@ -140,30 +138,24 @@ def process_session(ms_data: np.ndarray, ms_profile: dict,
     dict: Diccionario con claves 'ms' y 'rgb' con arrays normalizados y alineados.
     """
     
-    # 1. Normalización Espacial (Alineación RGB -> MS)
-    # -------------------------------------
-    print("Iniciando Normalización Espacial (Alineación RGB -> MS)...")
-    
-    # Alineamos el RGB (target) al perfil del MS (referencia/molde).
+    # Normalización Espacial (RGB -> MS)
     rgb_aligned = align_to_reference(
         target_array=rgb_data, 
         ref_profile=ms_profile,
-        src_profile=rgb_profile, # Perfil original del RGB
+        src_profile=rgb_profile, 
         resampling=Resampling.bilinear
     )
 
     if rgb_aligned is None:
-        print("❌ Alineación espacial fallida.")
+        print("Alineación espacial fallida.")
         return {"ms": None, "rgb": None}
     
-    print("✅ Alineación espacial completada.")
+    print("Alineación espacial completada.")
 
-    # 2. Normalización Radiométrica
-    # -----------------------------
-    print("Iniciando Normalización Radiométrica ([0, 1])...")
+    # Normalización Radiométrica
+    print("Iniciando Normalización Radiométrica")
     
     aligned_data = {
-        # El MS ya está en el sistema de coordenadas de referencia, solo se normaliza radiométricamente.
         "ms_data": ms_data,       
         "rgb_aligned": rgb_aligned
     }
@@ -171,6 +163,6 @@ def process_session(ms_data: np.ndarray, ms_profile: dict,
     # Aplicamos la normalización [0, 1] a ambos
     normalized = normalize_all(aligned_data)
     
-    print("✅ Normalización radiométrica completada.")
+    print("Normalización radiométrica completada.")
 
     return normalized
