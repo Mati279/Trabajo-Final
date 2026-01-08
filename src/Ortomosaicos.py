@@ -1,10 +1,9 @@
 """
 Módulo de carga y visualización de ortomosaicos
-===============================================
 
-Colección de utilidades para leer y visualizar arrays de imágenes georreferenciadas.
+Utilidades para leer y visualizar arrays de imágenes georreferenciadas.
 
-El flujo de trabajo actual se basa en la selección manual de rutas y el uso 
+El flujo de trabajo se basa en la selección manual de rutas y el uso 
 de la función `read_tif_array` para cargar los datos en memoria.
 """
 
@@ -20,20 +19,17 @@ def read_tif_array(file_path: str) -> tuple[np.ndarray | None, dict | None]:
     y su perfil geográfico. Debe ser un archivo GeoTIFF válido.
     
     Parámetros:
-    -----------
-    file_path : str
-        Ruta completa al archivo .tif.
+     file_path : str
+        Ruta al archivo .tif.
 
     Retorna:
-    --------
-    (np.ndarray | None, dict | None)
         1. Array con los datos de la imagen como float32.
         2. Perfil geográfico.
         Retorna (None, None) si el archivo no existe, no es GeoTIFF, o hay un error.
     """
     # Verificación de existencia del archivo
     if not os.path.exists(file_path):
-        print(f"Error: archivo no encontrado en la ruta: {file_path}")
+        print(f"Error: archivo no encontrado en: {file_path}")
         return None, None
 
     try:
@@ -53,22 +49,20 @@ def read_tif_array(file_path: str) -> tuple[np.ndarray | None, dict | None]:
             return data, profile
             
     except Exception as e:
-        # anejo de errores
         print(f"Error al leer el archivo {file_path}: {e}")
         return None, None
 
 
 # Método de visualización de ortomosaicos.
-def show_orthomosaic(orthomosaic: np.ndarray, title: str = None) -> None:
+def show_orthomosaic(orthomosaic: np.ndarray, title: str = " ") -> None:
     """
-    Visualiza un ortomosaico (array de NumPy).
+    Visualiza un ortomosaico (como array de NumPy).
     
-    Esta función asume que los datos ya están cargados en memoria como np.ndarray.
-    Maneja arrays con 1, 3 o más bandas (MS) para la visualización.
+    Esta función asume que los datos ya están cargados como np.ndarray.
+    Maneja arrays para la visualización.
 
     Parámetros:
-    -----------
-    orthomosaic : np.ndarray
+        orthomosaic : np.ndarray
         Array de NumPy ya cargado en memoria.
     title : str, opcional
         Título del gráfico.
@@ -82,7 +76,7 @@ def show_orthomosaic(orthomosaic: np.ndarray, title: str = None) -> None:
     
     plt.figure(figsize=(8, 8))
 
-    # Caso A: Imagen con color (3 bandas o más)
+    # Imagen con color (3 bandas o más)
     if data.shape[0] >= 3:
         # Si es el MS tomamos solo las primeras 3 (R, G, B/NIR) para que Matplotlib sepa qué dibujar.
         display_data = data[:3]
@@ -97,7 +91,7 @@ def show_orthomosaic(orthomosaic: np.ndarray, title: str = None) -> None:
             
         plt.imshow(rgb_img)
 
-    # Caso B: Imagen blanco y negro (1 banda, DSM)
+    # Imagen blanco y negro (1 banda, DSM)
     elif data.shape[0] == 1:
         # Mostramos la única banda con escala de grises
         plt.imshow(data[0], cmap="gray")
