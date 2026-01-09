@@ -87,9 +87,8 @@ def show_orthomosaic(orthomosaic: np.ndarray, title: str = " ") -> None:
         # Normalizamos rápido para visualización
         max_val = np.nanmax(rgb_img)
         if max_val > 0:
-            rgb_img /= max_val
-            
-        plt.imshow(rgb_img)
+            rgb_img /= max_val     
+        plt.imshow(np.clip(rgb_img, 0, 1))
 
     # Imagen blanco y negro (1 banda, DSM)
     elif data.shape[0] == 1:
