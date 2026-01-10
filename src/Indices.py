@@ -114,3 +114,27 @@ class VegetationIndices:
             indices["evi"] = self.calculate_evi_hybrid()
             
         return indices
+    
+    def plot_index(self, index_array, title="Mapa de Índice", cmap='RdYlGn'):
+        """
+        Muestra un mapa de calor de cualquier array (índice, máscara, etc.).
+        
+        Args:
+            index_array (numpy.ndarray).
+            title (str): Título del gráfico.
+            cmap (str): Mapa de color (ej: 'RdYlGn' para salud, 'Greens' para ExG, 'gray' para máscaras).
+        """
+        import matplotlib.pyplot as plt
+
+        plt.figure(figsize=(10, 6))
+        
+        # Para índices tipo NDVI, fijamos el rango en 0-1
+        vmin = 0 if cmap == 'RdYlGn' else None
+        vmax = 1 if cmap == 'RdYlGn' else None
+
+        im = plt.imshow(index_array, cmap=cmap, vmin=vmin, vmax=vmax)
+        plt.colorbar(im, label='Valor')
+        
+        plt.title(title)
+        plt.axis('off')
+        plt.show()
