@@ -25,7 +25,7 @@ class VegetationIndices:
     B_RGB_GREEN = 1
     B_RGB_BLUE = 2
 
-    def __init__(self, ms_norm_array, rgb_norm_array=None): # RGB opcional por ahora.
+    def __init__(self, ms_norm_array, rgb_norm_array=None): 
         """
         Inicializa la calculadora con arrays ya normalizados.
 
@@ -36,13 +36,13 @@ class VegetationIndices:
         self.ms_array = ms_norm_array
         self.rgb_array = rgb_norm_array
         
-        # Extracción de bandas del MS
+        # Extrae las bandas del MS
         self.red = self.ms_array[self.B_MS_RED, :, :]
         self.green = self.ms_array[self.B_MS_GREEN, :, :]
         self.nir = self.ms_array[self.B_MS_NIR, :, :]
         self.red_edge = self.ms_array[self.B_MS_RED_EDGE, :, :]
         
-        # Extracción de bandas del RGB (si disponible)
+        # Extrae las bandas del RGB (si disponible)
         if self.rgb_array is not None:
             self.rgb_red = self.rgb_array[self.B_RGB_RED, :, :]
             self.rgb_green = self.rgb_array[self.B_RGB_GREEN, :, :]
@@ -50,25 +50,34 @@ class VegetationIndices:
 
     def _safe_divide(self, numerator, denominator):
         """
-        Maneja división por cero y NaNs.
+        Realiza la división manejando denominadores cero, valores muy pequeños y NaNs.
         """
-        with np.errstate(divide='ignore', invalid='ignore'):
-            result = np.true_divide(numerator, denominator)
-            result[result == np.inf] = 0.0
-            result[result == -np.inf] = 0.0
-            result = np.nan_to_num(result, nan=0.0)
+        # Crea una máscara para identificar divisiones por cero o números extremadamente pequeños
+        # que disparan los valores a infinito.
+        mask = (denominator == 0) | (np.abs(denominator) < 1e-10)
+        
+        # Prepara un array de salida lleno de NaNs para los casos inválidos
+        result = np.full(numerator.shape, np.nan, dtype=np.float32)
+        
+        # Realiza la división solo donde el denominador es seguro
+        result[~mask] = numerator[~mask] / denominator[~mask]
+        
         return result
 
     # Índices principales (usando el MS)   
     def calculate_ndvi(self):
         """NDVI = (NIR - RED) / (NIR + RED)"""
-        return self._safe_divide(self.nir - self.red, self.nir + self.red)
+        res = self._safe_divide(self.nir - self.red, self.nir + self.red)
+        # Asegura que el resultado esté en el rango físico real [-1, 1]
+        return np.clip(res, -1, 1)
 
     def calculate_ndre(self):
         """NDRE = (NIR - RedEdge) / (NIR + RedEdge)."""
-        return self._safe_divide(self.nir - self.red_edge, self.nir + self.red_edge)
+        res = self._safe_divide(self.nir - self.red_edge, self.nir + self.red_edge)
+        # Asegura que el resultado esté en el rango físico real [-1, 1]
+        return np.clip(res, -1, 1)
 
-    def calculate_savi(self, L=0.5): # L sería para el suelo.
+    def calculate_savi(self, L=0.5): 
         """SAVI = ((NIR - RED) / (NIR + RED + L)) * (1 + L)"""
         numerator = self.nir - self.red
         denominator = self.nir + self.red + L
@@ -76,7 +85,8 @@ class VegetationIndices:
     
     def calculate_gndvi(self):
         """GNDVI = (NIR - Green) / (NIR + Green)"""
-        return self._safe_divide(self.nir - self.green, self.nir + self.green)
+        res = self._safe_divide(self.nir - self.green, self.nir + self.green)
+        return np.clip(res, -1, 1)
 
     # Índices adicionales (requiere el blue del RGB)
     def calculate_vari(self):
@@ -117,19 +127,14 @@ class VegetationIndices:
     
     def plot_index(self, index_array, title="Mapa de Índice", cmap='RdYlGn'):
         """
-        Muestra un mapa de calor de cualquier array (índice, máscara, etc.).
-        
-        Args:
-            index_array (numpy.ndarray).
-            title (str): Título del gráfico.
-            cmap (str): Mapa de color (ej: 'RdYlGn' para salud, 'Greens' para ExG, 'gray' para máscaras).
+        Muestra un mapa de calor de un índice.
         """
         import matplotlib.pyplot as plt
 
         plt.figure(figsize=(10, 6))
         
-        # Para índices tipo NDVI, fijamos el rango en 0-1
-        vmin = 0 if cmap == 'RdYlGn' else None
+        # Establece los límites visuales para índices normalizados
+        vmin = -1 if cmap == 'RdYlGn' else None
         vmax = 1 if cmap == 'RdYlGn' else None
 
         im = plt.imshow(index_array, cmap=cmap, vmin=vmin, vmax=vmax)

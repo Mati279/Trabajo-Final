@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 def read_tif_array(file_path: str) -> tuple[np.ndarray | None, dict | None]:
     """
     Lee un archivo TIF de cualquier ruta y retorna su contenido como un array NumPy
-    y su perfil geográfico. Debe ser un archivo GeoTIFF válido.
+    y su perfil geográfico. Debe ser un archivo GeoTIFF válido. Maneja también los valores NoData.
     
     Parámetros:
      file_path : str
@@ -37,6 +37,13 @@ def read_tif_array(file_path: str) -> tuple[np.ndarray | None, dict | None]:
         with rasterio.open(file_path) as src:
             # Lee los datos, casteando a float32 para la Normalización Radiométrica
             data = src.read(out_dtype=np.float32)
+            
+            # Obtiene el valor definido como NoData en el archivo
+            nodata_val = src.nodata
+            
+            # Si existe un valor NoData, convierte esos píxeles a NaN para evitar errores en cálculos
+            if nodata_val is not None:
+                data[data == nodata_val] = np.nan
             
             # Copia el perfil geográfico
             profile = src.profile.copy()
