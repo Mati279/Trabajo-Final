@@ -125,17 +125,18 @@ class VegetationIndices:
             
         return indices
     
-    def plot_index(self, index_array, title="Mapa de Índice", cmap='RdYlGn'):
+    def plot_index(self, index_array, title="Mapa de Índice", cmap='RdYlGn', vmin=None, vmax=None):
         """
         Muestra un mapa de calor de un índice.
+        Permite definir vmin y vmax. Si no se definen y el cmap es RdYlGn, usa [-1, 1].
         """
         import matplotlib.pyplot as plt
 
         plt.figure(figsize=(10, 6))
         
         # Establece los límites visuales para índices normalizados
-        vmin = -1 if cmap == 'RdYlGn' else None
-        vmax = 1 if cmap == 'RdYlGn' else None
+        if vmin is None and vmax is None and cmap == 'RdYlGn':
+            vmin, vmax = -1, 1
 
         im = plt.imshow(index_array, cmap=cmap, vmin=vmin, vmax=vmax)
         plt.colorbar(im, label='Valor')
