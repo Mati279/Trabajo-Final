@@ -127,20 +127,34 @@ class VegetationIndices:
     
     def plot_index(self, index_array, title="Mapa de Índice", cmap='RdYlGn', vmin=None, vmax=None):
         """
-        Muestra un mapa de calor de un índice.
+        Muestra un mapa de calor de un índice y su histograma (relación 2:1).
         Permite definir vmin y vmax. Si no se definen y el cmap es RdYlGn, usa [-1, 1].
         """
         import matplotlib.pyplot as plt
 
-        plt.figure(figsize=(10, 6))
-        
         # Establece los límites visuales para índices normalizados
         if vmin is None and vmax is None and cmap == 'RdYlGn':
             vmin, vmax = -1, 1
 
-        im = plt.imshow(index_array, cmap=cmap, vmin=vmin, vmax=vmax)
-        plt.colorbar(im, label='Valor')
+        # Configuración de la figura: 2 columnas, relación de ancho 2:1
+        fig, (ax_map, ax_hist) = plt.subplots(1, 2, figsize=(14, 6), gridspec_kw={'width_ratios': [2, 1]})
         
-        plt.title(title)
-        plt.axis('off')
+        # Mapa
+        im = ax_map.imshow(index_array, cmap=cmap, vmin=vmin, vmax=vmax)
+        ax_map.set_title(title)
+        ax_map.axis('off')
+        plt.colorbar(im, ax=ax_map, fraction=0.046, pad=0.04, label='Valor')
+
+        # Histograma
+        # Aplanar y filtrar NaNs
+        valid_data = index_array.flatten()
+        valid_data = valid_data[~np.isnan(valid_data)]
+        
+        ax_hist.hist(valid_data, bins=50, color='gray', alpha=0.7, edgecolor='white')
+        ax_hist.set_title("Distribución de Valores")
+        ax_hist.set_xlabel("Valor")
+        ax_hist.set_ylabel("Frecuencia")
+        ax_hist.grid(axis='y', linestyle='--', alpha=0.5)
+
+        plt.tight_layout()
         plt.show()
