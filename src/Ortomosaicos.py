@@ -83,12 +83,12 @@ def show_orthomosaic(orthomosaic: np.ndarray, title: str = " ") -> None:
     
     plt.figure(figsize=(8, 8))
 
-    # Imagen con color (3 bandas o más)
+    # Imagen con color
     if data.shape[0] >= 3:
         # Si es el MS tomamos solo las primeras 3 (R, G, B/NIR) para que Matplotlib sepa qué dibujar.
         display_data = data[:3]
         
-        # Transponemos: De (3, Alto, Ancho) -> (Alto, Ancho, 3) para matplotlib
+        # Transponemos: De (3, Alto, Ancho) a (Alto, Ancho, 3) para matplotlib
         rgb_img = np.transpose(display_data, (1, 2, 0)).astype(np.float32)
         
         # Normalizamos rápido para visualización

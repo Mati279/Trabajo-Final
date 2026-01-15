@@ -73,25 +73,68 @@ def align_to_reference(target_array: np.ndarray, ref_profile: dict,
 def normalize_radiometric(image: np.ndarray) -> np.ndarray:
     """
     Escala los valores de un ortomosaico al rango [0, 1].
-
-    Retorna un array float32.
+    Maneja cada banda independientemente para evitar que bandas
+    con rangos diferentes (como ALPHA) afecten la normalización.
     """
     if image is None:
         return None
 
     arr = image.astype("float32")
-
-    if np.issubdtype(image.dtype, np.uint8):
-        arr /= 255.0
-    elif np.issubdtype(image.dtype, np.uint16): 
-        arr /= 65535.0
+    
+    # Para multiespectral (3D): normalizar cada banda independientemente
+    if arr.ndim == 3:
+        print(f"  🔧 Normalizando {arr.shape[0]} bandas independientemente")
+        normalized = np.zeros_like(arr)
+        
+        for i in range(arr.shape[0]):
+            band = arr[i]
+            sample = band[::10, ::10]
+            current_min = np.nanmin(sample)
+            current_max = np.nanmax(sample)
+            
+            print(f"     Banda {i}: Min={current_min:.6f}, Max={current_max:.6f}")
+            
+            # Si ya está en [0, 1] o rango pequeño, no normalizar
+            if current_max <= 1.0:
+                normalized[i] = np.clip(band, 0, 1)
+                print(f"              → Ya normalizada, solo clip")
+            
+            # Si está en rango grande (0-255), normalizar por percentil
+            elif current_max > 1.5:
+                max_val = np.nanpercentile(sample, 99.9)
+                if max_val > 0:
+                    normalized[i] = band / max_val
+                    print(f"              → Normalizada por percentil 99.9={max_val:.2f}")
+            
+            # Rango intermedio, normalizar por max
+            else:
+                if current_max > 0:
+                    normalized[i] = band / current_max
+                    print(f"              → Normalizada por max={current_max:.4f}")
+                
+        return np.clip(normalized, 0, 1)
+    
+    # Para RGB (2D): normalizar todo junto
     else:
-        # Para floats ya cargados, normalizamos por el máximo.
-        max_val = np.nanmax(arr)
-        if max_val > 0:
-            arr /= max_val
-
-    return arr
+        sample = arr[::10, ::10] if arr.ndim > 1 else arr
+        current_max = np.nanmax(sample)
+        
+        print(f"  🔧 Normalizando imagen 2D/RGB: Max={current_max:.4f}")
+        
+        if current_max > 1.5:
+            # Normalizar por percentil si es rango grande
+            max_val = np.nanpercentile(sample, 99.9)
+            if max_val > 0:
+                arr = arr / max_val
+                print(f"     → Normalizada: {current_max:.2f} → 1.0")
+        elif current_max > 1.0:
+            # Normalizar por max si está en rango intermedio
+            arr = arr / current_max
+            print(f"     → Normalizada por max")
+        else:
+            print(f"     → Ya normalizada")
+            
+        return np.clip(arr, 0, 1)
 
 
 def normalize_all(aligned_data: dict) -> dict:

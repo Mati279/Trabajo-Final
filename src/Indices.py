@@ -28,12 +28,14 @@ class VegetationIndices:
     def __init__(self, ms_norm_array, rgb_norm_array=None): 
         """
         Inicializa la calculadora con arrays ya normalizados.
-
-        Args:
-            ms_norm_array (numpy.ndarray).
-            rgb_norm_array (numpy.ndarray, opcional).
         """
-        self.ms_array = ms_norm_array
+        # Si el MS tiene 5 bandas, usar solo las primeras 4 (ignorar ALPHA)
+        if ms_norm_array.shape[0] == 5:
+            print("⚠️  Detectadas 5 bandas en MS, usando solo las primeras 4 (ignorando ALPHA)")
+            self.ms_array = ms_norm_array[:4, :, :]  # Toma solo bandas 0-3
+        else:
+            self.ms_array = ms_norm_array
+        
         self.rgb_array = rgb_norm_array
         
         # Extrae las bandas del MS
@@ -42,7 +44,7 @@ class VegetationIndices:
         self.nir = self.ms_array[self.B_MS_NIR, :, :]
         self.red_edge = self.ms_array[self.B_MS_RED_EDGE, :, :]
         
-        # Extrae las bandas del RGB (si disponible)
+        # Extrae las bandas del RGB (si está)
         if self.rgb_array is not None:
             self.rgb_red = self.rgb_array[self.B_RGB_RED, :, :]
             self.rgb_green = self.rgb_array[self.B_RGB_GREEN, :, :]
@@ -50,38 +52,38 @@ class VegetationIndices:
 
     def _safe_divide(self, numerator, denominator):
         """
-        Realiza la división manejando denominadores cero, valores muy pequeños y NaNs.
+        Realiza la división manejando denominadores cero.
         """
-        # Crea una máscara para identificar divisiones por cero o números extremadamente pequeños
-        # que disparan los valores a infinito.
         mask = (denominator == 0) | (np.abs(denominator) < 1e-10)
-        
-        # Prepara un array de salida lleno de NaNs para los casos inválidos
-        result = np.full(numerator.shape, np.nan, dtype=np.float32)
-        
-        # Realiza la división solo donde el denominador es seguro
-        result[~mask] = numerator[~mask] / denominator[~mask]
-        
+        result = np.full_like(denominator, np.nan, dtype=np.float64)
+
+        # Manejar caso escalar en numerator
+        if np.isscalar(numerator):
+            result[~mask] = numerator / denominator[~mask]
+        else:
+            result[~mask] = numerator[~mask] / denominator[~mask]
+
         return result
 
     # Índices principales (usando el MS)   
     def calculate_ndvi(self):
         """NDVI = (NIR - RED) / (NIR + RED)"""
         res = self._safe_divide(self.nir - self.red, self.nir + self.red)
-        # Asegura que el resultado esté en el rango físico real [-1, 1]
+        # Asegura que el resultado esté en el rango [-1, 1]
         return np.clip(res, -1, 1)
 
     def calculate_ndre(self):
         """NDRE = (NIR - RedEdge) / (NIR + RedEdge)."""
         res = self._safe_divide(self.nir - self.red_edge, self.nir + self.red_edge)
-        # Asegura que el resultado esté en el rango físico real [-1, 1]
+        # Asegura que el resultado esté en el rango [-1, 1]
         return np.clip(res, -1, 1)
 
     def calculate_savi(self, L=0.5): 
         """SAVI = ((NIR - RED) / (NIR + RED + L)) * (1 + L)"""
         numerator = self.nir - self.red
-        denominator = self.nir + self.red + L
-        return self._safe_divide(numerator, denominator) * (1 + L)
+        denominator = self.nir + self.red + L 
+        res = self._safe_divide(numerator, denominator) * (1 + L)
+        return res
     
     def calculate_gndvi(self):
         """GNDVI = (NIR - Green) / (NIR + Green)"""
@@ -102,11 +104,19 @@ class VegetationIndices:
 
     def calculate_evi_hybrid(self):
         """
-        EVI = 2.5 * ((NIR - RED) / (NIR + 6*RED - 7.5*BLUE + 1))
+        EVI simplificado para valores normalizados (0-1).
+        
+        EVI_simplified = 2.5 * ((NIR - RED) / (NIR + 2.4*RED + 1))
+        
+        Esta versión ajustada funciona mejor cuando BLUE está normalizado.
         """
-        if self.rgb_blue is None: return None
+        if self.rgb_blue is None: 
+            return None
+        
         numerator = self.nir - self.red
-        denominator = self.nir + 6 * self.red - 7.5 * self.rgb_blue + 1
+        # Coeficientes ajustados para valores 0-1
+        denominator = self.nir + 2.4 * self.red + 1
+        
         return 2.5 * self._safe_divide(numerator, denominator)
 
     def calculate_main_indices(self):
@@ -120,23 +130,36 @@ class VegetationIndices:
         
         if self.rgb_array is not None:
             indices["vari"] = self.calculate_vari()
-            indices["exg"] = self.calculate_exg()
-            indices["evi"] = self.calculate_evi_hybrid()
+            indices["exg"] = self.calculate_exg() # type: ignore
+            indices["evi"] = self.calculate_evi_hybrid() # type: ignore
             
         return indices
     
     def plot_index(self, index_array, title="Mapa de Índice", cmap='RdYlGn', vmin=None, vmax=None):
         """
-        Muestra un mapa de calor de un índice y su histograma (relación 2:1).
-        Permite definir vmin y vmax. Si no se definen y el cmap es RdYlGn, usa [-1, 1].
+        Muestra un mapa de calor de un índice y su histograma.
+        Permite definir vmin y vmax..
         """
         import matplotlib.pyplot as plt
 
-        # Establece los límites visuales para índices normalizados
-        if vmin is None and vmax is None and cmap == 'RdYlGn':
-            vmin, vmax = -1, 1
+        # Aplanar y filtrar NaNs para estadísticas y visualización
+        valid_data = index_array.flatten()
+        valid_data = valid_data[~np.isnan(valid_data)]
 
-        # Configuración de la figura: 2 columnas, relación de ancho 2:1
+        # Establece los límites visuales si no se proveen
+        if vmin is None and vmax is None:
+            if cmap == 'RdYlGn':
+                # Para índices normalizados, usar el rango [-1, 1]
+                vmin, vmax = -1, 1
+            else:
+                # Para otros índices usar percentiles para evitar outliers
+                if valid_data.size > 0:
+                    vmin = np.nanpercentile(valid_data, 2)
+                    vmax = np.nanpercentile(valid_data, 98)
+                else:
+                    vmin, vmax = 0, 1  # Fallback si no hay datos
+
+        # Configuración de la figura
         fig, (ax_map, ax_hist) = plt.subplots(1, 2, figsize=(14, 6), gridspec_kw={'width_ratios': [2, 1]})
         
         # Mapa
@@ -146,11 +169,7 @@ class VegetationIndices:
         plt.colorbar(im, ax=ax_map, fraction=0.046, pad=0.04, label='Valor')
 
         # Histograma
-        # Aplanar y filtrar NaNs
-        valid_data = index_array.flatten()
-        valid_data = valid_data[~np.isnan(valid_data)]
-        
-        ax_hist.hist(valid_data, bins=50, color='gray', alpha=0.7, edgecolor='white')
+        ax_hist.hist(valid_data, bins=50, color='gray', alpha=0.7, edgecolor='white', range=(vmin, vmax))
         ax_hist.set_title("Distribución de Valores")
         ax_hist.set_xlabel("Valor")
         ax_hist.set_ylabel("Frecuencia")
